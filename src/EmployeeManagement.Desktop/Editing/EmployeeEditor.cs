@@ -3,16 +3,22 @@ using EmployeeManagement.Data.Data;
 using EmployeeManagement.Data.Entities;
 using EmployeeManagement.Data.Services;
 using EmployeeManagement.Desktop.Models;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace EmployeeManagement.Desktop.Editing;
 
 public sealed class EmployeeEditor
 {
     private readonly EmployeeManagementService _employeeService;
+    private readonly ILogger<EmployeeEditor> _logger;
 
-    public EmployeeEditor(EmployeeManagementService employeeService)
+    public EmployeeEditor(
+        EmployeeManagementService employeeService,
+        ILogger<EmployeeEditor>? logger = null)
     {
         _employeeService = employeeService;
+        _logger = logger ?? NullLogger<EmployeeEditor>.Instance;
     }
 
     public BindingList<EmployeeRow> Rows { get; } = new();
@@ -25,8 +31,14 @@ public sealed class EmployeeEditor
 
     public async Task LoadAsync(CancellationToken cancellationToken = default)
     {
+        _logger.LogInformation("Editor: loading employees...");
         var departments = await _employeeService.GetDepartmentsAsync(cancellationToken);
-        var employees = await _employeeService.GetAllEmployees(cancellationToken);
+
+        _logger.LogInformation("Editor: loaded {DepartmentCount} departments.", departments.Count);
+      
+        var employees = await _employeeService.GetAllEmployeesAsync(cancellationToken);
+
+        _logger.LogInformation("Editor: loaded {EmployeeCount} employees.", employees.Count);
 
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -44,12 +56,16 @@ public sealed class EmployeeEditor
             foreach (var row in loadedRows)
             {
                 Rows.Add(row);
+
+        _logger.LogInformation("Editor: added a new unsaved employee row.");
             }
         }
         finally
         {
             Rows.RaiseListChangedEvents = true;
             Rows.ResetBindings();
+
+            _logger.LogInformation("Editor: bound {RowCount} employee rows.", Rows.Count);
         }
     }
 
@@ -62,6 +78,8 @@ public sealed class EmployeeEditor
 
         Rows.Add(row);
 
+        _logger.LogInformation("Editor: added a new unsaved employee row.");
+
         return row;
     }
 
@@ -70,10 +88,14 @@ public sealed class EmployeeEditor
         if (row.IsNew)
         {
             Rows.Remove(row);
+
+            _logger.LogDebug("Editor: removed an employee row locally.");
         }
         else
         {
             row.IsMarkedForDelete = true;
+
+            _logger.LogInformation("Editor: marked employee {EmployeeId} for deletion.", row.Id);
         }
     }
 
@@ -109,7 +131,11 @@ public sealed class EmployeeEditor
         var modifiedRows = Rows.Where(row => !row.IsNew && row.HasChanges && !row.IsMarkedForDelete).ToList();
         var deletedRows = Rows.Where(row => row.IsMarkedForDelete).ToList();
 
+        _logger.LogInformation("Editor: saving {ChangeCount} changes (before await).", ChangedRowCount);
+
         var result = await _employeeService.SaveAllAsync(CreateChanges(), cancellationToken);
+
+        _logger.LogInformation("Editor: save completed (after await). Applying saved values to rows.");
 
         // Keep pending rows untouched until the complete batch has succeeded.
         for (var index = 0; index < newRows.Count; index++)
@@ -125,16 +151,22 @@ public sealed class EmployeeEditor
         foreach (var row in deletedRows)
         {
             Rows.Remove(row);
+
+            _logger.LogDebug("Editor: removed an employee row locally.");
         }
     }
 
     public void DiscardChanges()
     {
+        _logger.LogInformation("Editor: discarding {ChangeCount} pending changes.", ChangedRowCount);
+
         foreach (var row in Rows.ToList())
         {
             if (row.IsNew)
             {
                 Rows.Remove(row);
+
+                _logger.LogDebug("Editor: removed an employee row locally.");
             }
             else
             {

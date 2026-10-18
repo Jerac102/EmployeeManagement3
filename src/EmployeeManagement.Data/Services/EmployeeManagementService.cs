@@ -20,7 +20,7 @@ public class EmployeeManagementService
         this.logger = logger ?? NullLogger<EmployeeManagementService>.Instance;
     }
 
-    public async Task<List<EmployeeData>> GetAllEmployees(CancellationToken cancellationToken = default)
+    public async Task<List<EmployeeData>> GetAllEmployeesAsync(CancellationToken cancellationToken = default)
     {
         logger.LogInformation("Loading employees.");
 

@@ -81,7 +81,7 @@ public class EmployeeDesktopWorkflowTests
         CollectionAssert.DoesNotContain(_editor.Rows, deleted);
         Assert.AreEqual(2, await _context.Employees.CountAsync());
 
-        var persisted = await new EmployeeManagementService(_context).GetAllEmployees();
+        var persisted = await new EmployeeManagementService(_context).GetAllEmployeesAsync();
 
         CollectionAssert.AreEquivalent(persisted, _editor.Rows.Select(row => row.ToData()).ToList());
 
@@ -131,7 +131,7 @@ public class EmployeeDesktopWorkflowTests
 
         _editor.DiscardChanges();
 
-        var persisted = await new EmployeeManagementService(_context).GetAllEmployees();
+        var persisted = await new EmployeeManagementService(_context).GetAllEmployeesAsync();
 
         Assert.IsFalse(_editor.HasChanges);
         Assert.HasCount(2, _editor.Rows);

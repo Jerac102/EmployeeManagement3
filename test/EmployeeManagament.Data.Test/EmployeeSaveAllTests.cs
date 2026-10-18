@@ -14,7 +14,7 @@ public class EmployeeSaveAllTests : DatabaseTestBase
     {
         var service = new EmployeeManagementService(Context);
         var employee = TestData.Employees[0];
-        var before = (await service.GetAllEmployees()).Single(data => data.Id == employee.Id);
+        var before = (await service.GetAllEmployeesAsync()).Single(data => data.Id == employee.Id);
 
         var firstChange = before with { FirstName = "First change" };
         var secondChange = before with { FirstName = "Second change" };
@@ -51,7 +51,7 @@ public class EmployeeSaveAllTests : DatabaseTestBase
     public async Task SaveAll_Failure_DetachesFailedWritesButPreservesUnrelatedTracking()
     {
         var service = new EmployeeManagementService(Context);
-        var before = await service.GetAllEmployees();
+        var before = await service.GetAllEmployeesAsync();
         var modified = TestData.Employees.Single(employee => employee.Id == before[0].Id);
         var untouched = TestData.Employees.Single(employee => employee.Id == before[2].Id);
         var department = TestData.Departments[0];
@@ -100,7 +100,7 @@ public class EmployeeSaveAllTests : DatabaseTestBase
     public async Task SaveAll_InsertsUpdatesAndDeletesTogether()
     {
         var service = new EmployeeManagementService(Context);
-        var before = await service.GetAllEmployees();
+        var before = await service.GetAllEmployeesAsync();
         var modified = before[0] with { FirstName = "Updated" };
         var newEmployee = CreateEmployeeData();
 
@@ -109,7 +109,7 @@ public class EmployeeSaveAllTests : DatabaseTestBase
 
         await using var verification = CreateVerificationContext();
 
-        var persisted = await new EmployeeManagementService(verification).GetAllEmployees();
+        var persisted = await new EmployeeManagementService(verification).GetAllEmployeesAsync();
         var created = result.NewEmployees.Single();
         var expectedCreated = newEmployee with { Id = created.Id };
 
@@ -125,7 +125,7 @@ public class EmployeeSaveAllTests : DatabaseTestBase
     public async Task SaveAll_DatabaseFailure_RollsBackAndAllowsRetry()
     {
         var service = new EmployeeManagementService(Context);
-        var before = await service.GetAllEmployees();
+        var before = await service.GetAllEmployeesAsync();
 
         // An invalid foreign key forces SQL Server to reject the batch.
         var invalid = CreateEmployeeData() with { DepartmentId = int.MaxValue };
@@ -136,14 +136,15 @@ public class EmployeeSaveAllTests : DatabaseTestBase
 
         await using var verification = CreateVerificationContext();
 
-        var persisted = await new EmployeeManagementService(verification).GetAllEmployees();
+        var persisted = await new EmployeeManagementService(verification).GetAllEmployeesAsync();
 
         CollectionAssert.AreEquivalent(before, persisted);
 
-        var result = await service.SaveAllAsync(new EmployeeChanges([CreateEmployeeData()], [], []));
+        var employeeChanges = new EmployeeChanges([CreateEmployeeData()], [], []);
+        var result = await service.SaveAllAsync(employeeChanges);
 
         Assert.HasCount(1, result.NewEmployees);
-        Assert.AreEqual(before.Count + 1, await verification.Employees.CountAsync());
+        Assert.AreEqual(before.Count + employeeChanges.NewEmployees.Count, await verification.Employees.CountAsync());
     }
 
     [TestMethod]
@@ -152,7 +153,7 @@ public class EmployeeSaveAllTests : DatabaseTestBase
     public async Task SaveAll_MissingEmployee_DoesNotApplyOtherChanges(bool update)
     {
         var service = new EmployeeManagementService(Context);
-        var before = await service.GetAllEmployees();
+        var before = await service.GetAllEmployeesAsync();
 
         var newEmployee = CreateEmployeeData();
         var missingEmployee = before[0] with { Id = int.MaxValue };
@@ -172,7 +173,7 @@ public class EmployeeSaveAllTests : DatabaseTestBase
     public async Task SaveAll_ConflictingOperations_AreRejected()
     {
         var service = new EmployeeManagementService(Context);
-        var employee = (await service.GetAllEmployees())[0];
+        var employee = (await service.GetAllEmployeesAsync())[0];
 
         await Assert.ThrowsAsync<ArgumentException>(() => service.SaveAllAsync(
             new EmployeeChanges([], [employee], [employee.Id])));

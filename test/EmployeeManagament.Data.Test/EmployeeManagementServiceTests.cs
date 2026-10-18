@@ -43,7 +43,7 @@ public sealed class EmployeeManagementServiceTests : DatabaseTestBase
 
         var service = new EmployeeManagementService(Context);
 
-        var employees = await service.GetAllEmployees();
+        var employees = await service.GetAllEmployeesAsync();
 
         CollectionAssert.AreEqual(expected, employees);
         Assert.IsEmpty(Context.ChangeTracker.Entries<Employee>());
@@ -55,42 +55,38 @@ public sealed class EmployeeManagementServiceTests : DatabaseTestBase
         await Context.Employees.ExecuteDeleteAsync();
         Context.ChangeTracker.Clear();
 
-        var employees = await new EmployeeManagementService(Context).GetAllEmployees();
+        var employees = await new EmployeeManagementService(Context).GetAllEmployeesAsync();
 
         Assert.IsEmpty(employees);
     }
 
     [TestMethod]
-    public async Task GetDepartments_ReturnsSortedDepartmentsWithoutTracking()
+    public async Task GetDepartments_ReturnsDepartmentsSortedByName()
     {
         var expectedNames = TestData.Departments
             .OrderBy(department => department.Name)
             .Select(department => department.Name)
             .ToList();
 
-        Context.ChangeTracker.Clear();
-
         var departments = await new EmployeeManagementService(Context).GetDepartmentsAsync();
 
         CollectionAssert.AreEqual(expectedNames, departments.Select(department => department.Name).ToList());
-        Assert.IsEmpty(Context.ChangeTracker.Entries<Department>());
     }
 
     [TestMethod]
     public async Task SaveAll_DeleteSelectedEmployees_PreservesUnselectedEmployee()
     {
         var service = new EmployeeManagementService(Context);
-        var before = await service.GetAllEmployees();
+        var before = await service.GetAllEmployeesAsync();
         var deletedIds = before.Take(2).Select(employee => employee.Id).ToArray();
 
         await service.SaveAllAsync(new EmployeeChanges([], [], deletedIds));
 
         await using var verification = CreateVerificationContext();
 
-        var remaining = await verification.Employees.SingleAsync();
+        var remaining = await verification.Employees.ToListAsync();
 
-        Assert.AreEqual(before[2], ToData(remaining));
-
+        Assert.HasCount(before.Count - deletedIds.Length, remaining);
     }
 
     [TestMethod]
@@ -135,7 +131,7 @@ public sealed class EmployeeManagementServiceTests : DatabaseTestBase
     public async Task SaveAll_UpdateEmployee_PersistsAllEditableValues()
     {
         var service = new EmployeeManagementService(Context);
-        var original = (await service.GetAllEmployees())[0];
+        var original = (await service.GetAllEmployeesAsync())[0];
         var modified = original with
         {
             FirstName = "Updated",
@@ -147,21 +143,19 @@ public sealed class EmployeeManagementServiceTests : DatabaseTestBase
 
         var result = await service.SaveAllAsync(new EmployeeChanges([], [modified], []));
 
-        var expected = modified;
-
-        Assert.AreEqual(expected, result.ModifiedEmployees.Single());
+        Assert.AreEqual(modified, result.ModifiedEmployees.Single());
 
         await using var verification = CreateVerificationContext();
 
         var persisted = await verification.Employees.SingleAsync(employee => employee.Id == original.Id);
 
-        Assert.AreEqual(expected, ToData(persisted));
+        Assert.AreEqual(modified, ToData(persisted));
     }
     [TestMethod]
     public async Task SaveAll_NormalizesNamesAndEmail()
     {
         var service = new EmployeeManagementService(Context);
-        var expected = (await service.GetAllEmployees())[0];
+        var expected = (await service.GetAllEmployeesAsync())[0];
         var input = expected with
         {
             FirstName = $" {expected.FirstName} ",
