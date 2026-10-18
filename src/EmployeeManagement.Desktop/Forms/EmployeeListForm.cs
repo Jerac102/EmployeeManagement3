@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using System.Globalization;
-using EmployeeManagement.Desktop.Editing;
-using EmployeeManagement.Desktop.Models;
+using EmployeeManagement.Shared.Editing;
+using EmployeeManagement.Shared.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 

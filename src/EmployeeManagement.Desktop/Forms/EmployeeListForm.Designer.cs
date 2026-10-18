@@ -1,6 +1,6 @@
 #nullable enable
 
-using EmployeeManagement.Desktop.Models;
+using EmployeeManagement.Shared.Models;
 
 namespace EmployeeManagement.Desktop.Forms;
 

@@ -1,7 +1,7 @@
 using System.Text.Json;
 using EmployeeManagement.Data;
 using EmployeeManagement.Desktop.Forms;
-using EmployeeManagement.Desktop.Editing;
+using EmployeeManagement.Shared.Editing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NLog;

@@ -1,0 +1,153 @@
+@page "/"
+@inherits OwningComponentBase<EmployeeEditor>
+@inject IJSRuntime JS
+@inject ILogger<Employees> Logger
+
+<PageTitle>Employees · Employee Management</PageTitle>
+<NavigationLock ConfirmExternalNavigation="@(Editor.HasChanges || _busy)" OnBeforeInternalNavigation="BeforeNavigationAsync" />
+
+<div class="page-heading">
+    <div>
+        <p class="eyebrow">YOUR PEOPLE, IN ONE PLACE</p>
+        <h1>Employees <span class="count-badge">@Editor.Rows.Count</span>
+        </h1>
+        <p class="subtitle">Manage your team’s details. Edit here, then save everything together.</p>
+    </div>
+    <button class="button primary" type="button" @onclick="AddEmployee" disabled="@(!CanEdit || Editor.Departments.Count == 0)">
+        <span aria-hidden="true">＋</span> New employee</button>
+</div>
+
+<div class="summary-grid">
+    <div class="summary-card">
+        <span class="summary-label">EMPLOYEES</span>
+        <strong>@Editor.Rows.Count(row => !row.IsMarkedForDelete)</strong>
+        <span class="summary-caption">In your current list</span>
+    </div>
+    <div class="summary-card">
+        <span class="summary-label">DEPARTMENTS</span>
+        <strong>@Editor.Departments.Count</strong>
+        <span class="summary-caption">Across your organization</span>
+    </div>
+    <div class="summary-card">
+        <span class="summary-label">UNSAVED CHANGES</span>
+        <strong class="@((Editor.HasChanges) ? "amber-text" : "green-text")">@Editor.ChangedRowCount</strong>
+        <span class="summary-caption">@(Editor.HasChanges ? "Ready when you are" : "Everything is up to date")</span>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(_error))
+{
+    <div class="notice error" role="alert">
+        <strong>We couldn’t complete that action.</strong>
+        <span>@_error</span>
+    </div>
+}
+@if (!string.IsNullOrEmpty(_message))
+{
+    <div class="notice success" role="status">@_message</div>
+}
+
+<section class="table-card" aria-label="Employee directory" aria-busy="@_busy">
+    <EditForm EditContext="_editContext" OnSubmit="SaveAllAsync" @key="_editContext" FormName="employees">
+        <div class="table-toolbar">
+            <div>
+                <h2>Employee directory</h2>
+                <span class="muted">Click a field to edit it directly.</span>
+            </div>
+            <label class="search-box">
+                <span class="sr-only">Search employees</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="10.5" cy="10.5" r="6.5" />
+                    <path d="m16 16 5 5" />
+                </svg>
+                <input placeholder="Search employees…" @bind="_search" @bind:event="oninput" disabled="@_busy" />
+            </label>
+        </div>
+        <ValidationSummary class="validation-summary" />
+        <div class="table-scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th scope="col">FIRST NAME</th>
+                        <th scope="col">LAST NAME</th>
+                        <th scope="col">EMAIL ADDRESS</th>
+                        <th scope="col">DEPARTMENT</th>
+                        <th scope="col">HIRE DATE</th>
+                        <th scope="col">STATUS</th>
+                        <th scope="col">
+                            <span class="sr-only">Actions</span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in VisibleRows)
+                    {
+                        <tr @key="row" class="@(row.IsMarkedForDelete ? "deleted-row" : row.IsNew ? "new-row" : row.HasChanges ? "modified-row" : null)">
+                            <td>
+                                <input aria-label="First name for employee @(row.Id == 0 ? "new" : row.Id.ToString())" maxlength="100" required @bind="row.FirstName" @bind:event="oninput" disabled="@(_busy || row.IsMarkedForDelete)" />
+                            </td>
+                            <td>
+                                <input aria-label="Last name for employee @(row.Id == 0 ? "new" : row.Id.ToString())" maxlength="100" required @bind="row.LastName" @bind:event="oninput" disabled="@(_busy || row.IsMarkedForDelete)" />
+                            </td>
+                            <td>
+                                <input aria-label="Email for @row.FirstName @row.LastName" type="email" maxlength="200" placeholder="—" @bind="row.Email" @bind:event="oninput" disabled="@(_busy || row.IsMarkedForDelete)" />
+                            </td>
+                            <td>
+                                <select aria-label="Department for @row.FirstName @row.LastName" @bind="row.DepartmentId" disabled="@(_busy || row.IsMarkedForDelete)">
+                                @if (!Editor.Departments.Any(department => department.Id == row.DepartmentId))
+                                {
+                                    <option value="@row.DepartmentId" disabled>Unavailable department</option>
+                                }
+                                @foreach (var department in Editor.Departments)
+                                {
+                                    <option value="@department.Id">@department.Name</option>
+                                }
+                            </select>
+                            </td>
+                            <td>
+                                <InputDate aria-label="@($"Hire date for {row.FirstName} {row.LastName}")" @bind-Value="row.HireDate" disabled="@(_busy || row.IsMarkedForDelete)" />
+                            </td>
+                            <td>
+                                <span class="status-pill @(row.IsMarkedForDelete ? "removed" : row.HasChanges ? "pending" : "saved")">@(row.IsMarkedForDelete ? "Deleting" : row.IsNew ? "New" : row.HasChanges ? "Edited" : "Saved")</span>
+                            </td>
+                            <td>
+                                <button class="row-action" type="button" aria-label="@(row.IsMarkedForDelete ? $"Undo deletion of {row.FirstName} {row.LastName}" : $"Delete {row.FirstName} {row.LastName}")" disabled="@_busy" @onclick="() => DeleteAsync(row)">@(row.IsMarkedForDelete ? "Undo" : "Delete")</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            @if (!VisibleRows.Any())
+            {
+                <div class="empty-state">
+                    <span class="empty-icon" aria-hidden="true">◎</span>
+                    <h3>@(_busy ? "Loading your team…" : "No employees to display")</h3>
+                    <p>@(_search.Length > 0 ? "Try a different name or clear your search." : "Add your first employee using the button above.")</p>
+                </div>
+            }
+        </div>
+        <div class="table-footer">
+            <span>@VisibleRows.Count() of @Editor.Rows.Count employees <span class="footer-dot">·</span> Changes stay local until you save.</span>
+            <button type="button" class="text-button" @onclick="ReloadAsync" disabled="@_busy">↻ Refresh</button>
+        </div>
+        <div class="save-bar">
+            <div class="save-status">
+                <span class="save-indicator @(Editor.HasChanges ? "unsaved" : null)">
+                </span>
+                <div>
+                    <strong>@(_busy ? "Working…" : Editor.HasChanges ? $"{Editor.ChangedRowCount} unsaved change(s)" : "All changes saved")</strong>
+                    <small>@(Editor.HasChanges ? "Save all changes together, or discard them." : "You’re ready to make your next update.")</small>
+                </div>
+            </div>
+            <div class="save-actions">
+                <button class="button secondary" type="button" @onclick="DiscardAsync" disabled="@(!CanEdit || !Editor.HasChanges)">Discard changes</button>
+                <button class="button primary" type="submit" disabled="@(!CanEdit || !Editor.HasChanges)">@(_busy ? "Please wait…" : "Save all changes")</button>
+            </div>
+        </div>
+    </EditForm>
+</section>
+
+@if (_loaded && Editor.Departments.Count == 0)
+{
+    <p class="notice">No departments are available. Run the database seed script before adding employees.</p>
+}

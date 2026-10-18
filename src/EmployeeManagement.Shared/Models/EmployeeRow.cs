@@ -2,7 +2,7 @@ using EmployeeManagement.Data.Data;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace EmployeeManagement.Desktop.Models
+namespace EmployeeManagement.Shared.Models
 {
     public class EmployeeRow : INotifyPropertyChanged
     {

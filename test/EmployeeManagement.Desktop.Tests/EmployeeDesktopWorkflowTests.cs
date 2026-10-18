@@ -1,7 +1,7 @@
 using EmployeeManagement.Data;
 using EmployeeManagement.Data.Entities;
 using EmployeeManagement.Data.Services;
-using EmployeeManagement.Desktop.Editing;
+using EmployeeManagement.Shared.Editing;
 using Microsoft.EntityFrameworkCore;
 
 namespace EmployeeManagement.Desktop.Tests;

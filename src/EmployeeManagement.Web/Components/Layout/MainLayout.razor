@@ -1,0 +1,31 @@
+@inherits LayoutComponentBase
+
+<div class="app-shell">
+    <aside class="sidebar" aria-label="Main navigation">
+        <a class="brand" href="/" aria-label="Employee Management home">
+            <span class="brand-mark">em</span>
+            <span>Employee<br />
+                <strong>Management</strong>
+            </span>
+        </a>
+        <span class="nav-label">WORKSPACE</span>
+        <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m20 0v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z" />
+            </svg>
+            Employees
+        </NavLink>
+        <div class="sidebar-note">
+            <span class="connection-dot">
+            </span> Shared with your desktop app</div>
+    </aside>
+
+    <main>
+        <header class="topbar">
+            <span>Workspace <span class="slash">/</span> <strong>Employees</strong>
+            </span>
+            <span class="web-badge">WEB WORKSPACE</span>
+        </header>
+        <div class="page-content">@Body</div>
+    </main>
+</div>

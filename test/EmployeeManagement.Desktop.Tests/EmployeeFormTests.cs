@@ -7,9 +7,9 @@ using EmployeeManagement.Data;
 using EmployeeManagement.Data.Data;
 using EmployeeManagement.Data.Entities;
 using EmployeeManagement.Data.Services;
-using EmployeeManagement.Desktop.Editing;
+using EmployeeManagement.Shared.Editing;
 using EmployeeManagement.Desktop.Forms;
-using EmployeeManagement.Desktop.Models;
+using EmployeeManagement.Shared.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 

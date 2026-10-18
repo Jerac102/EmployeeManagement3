@@ -2,11 +2,11 @@ using System.ComponentModel;
 using EmployeeManagement.Data.Data;
 using EmployeeManagement.Data.Entities;
 using EmployeeManagement.Data.Services;
-using EmployeeManagement.Desktop.Models;
+using EmployeeManagement.Shared.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace EmployeeManagement.Desktop.Editing;
+namespace EmployeeManagement.Shared.Editing;
 
 public sealed class EmployeeEditor
 {
@@ -56,8 +56,6 @@ public sealed class EmployeeEditor
             foreach (var row in loadedRows)
             {
                 Rows.Add(row);
-
-        _logger.LogInformation("Editor: added a new unsaved employee row.");
             }
         }
         finally

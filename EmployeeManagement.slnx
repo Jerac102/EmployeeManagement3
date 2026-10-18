@@ -2,6 +2,8 @@
   <Folder Name="/src/">
     <Project Path="src/EmployeeManagement.Data/EmployeeManagement.Data.csproj" />
     <Project Path="src/EmployeeManagement.Desktop/EmployeeManagement.Desktop.csproj" />
+    <Project Path="src/EmployeeManagement.Shared/EmployeeManagement.Shared.csproj" />
+    <Project Path="src/EmployeeManagement.Web/EmployeeManagement.Web.csproj" />
   </Folder>
   <Folder Name="/test/">
     <Project Path="test/EmployeeManagament.Data.Test/EmployeeManagament.Data.Test.csproj" Id="4c0b39e1-87df-40ad-9eea-4dc9d84c4103" />

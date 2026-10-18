@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\EmployeeManagement.Data\EmployeeManagement.Data.csproj" />
+    <ProjectReference Include="..\EmployeeManagement.Shared\EmployeeManagement.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>
